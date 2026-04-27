@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VMM Turbo12">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<title>VMM Turbo12</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:#f3f2f3;color:#001430;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:14px;-webkit-text-size-adjust:100%;}
+input,button,select{font-family:inherit;}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:#7c9ac055;border-radius:2px;}
+
+/* ── Colors (CSS vars) ── */
+:root{
+  --main1:#001430;--aux:#001f4c;--steel:#7c9ac0;
+  --gold:#dac484;--golddim:rgba(218,196,132,0.15);
+  --red:#cc0007;--bg:#f3f2f3;--bgsec:#e7e7e7;
+  --card:#fff;--border:rgba(0,31,76,0.12);
+  --shadow:rgba(0,0,0,0.08);--text:#001430;
+  --muted:#5a6e8a;--green:#00c853;
+}
+
+/* ── Layout ── */
+#topbar{position:fixed;top:0;left:0;right:0;height:56px;z-index:200;
+  background:linear-gradient(135deg,var(--main1),var(--aux));
+  box-shadow:0 2px 12px rgba(0,20,48,0.3);
+  display:flex;align-items:center;gap:10px;padding:0 14px;}
+#sidebar{position:fixed;top:56px;left:0;bottom:0;width:220px;z-index:150;
+  background:linear-gradient(180deg,var(--main1),#001a38);
+  border-right:1px solid rgba(218,196,132,0.12);
+  overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  transition:transform .26s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;}
+#sidebar.closed{transform:translateX(-220px);}
+#overlay{display:none;position:fixed;top:56px;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.45);z-index:149;}
+#overlay.on{display:block;}
+#main{margin-top:56px;transition:margin-left .26s cubic-bezier(.4,0,.2,1);min-height:calc(100vh - 56px);}
+#main.shifted{margin-left:220px;}
+#content{max-width:1100px;margin:0 auto;padding:24px 20px 80px;}
+
+/* ── Topbar pieces ── */
+#toggle-btn{width:40px;height:40px;border-radius:9px;border:none;cursor:pointer;
+  background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  transition:background .2s;flex-shrink:0;}
+#toggle-btn.open{background:rgba(218,196,132,0.2);color:#dac484;}
+.topbar-logo{width:32px;height:32px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--steel),var(--main1));
+  border:2px solid rgba(218,196,132,0.4);
+  display:flex;align-items:center;justify-content:center;}
+.topbar-brand{line-height:1.1;}
+.topbar-brand b{font-size:15px;font-weight:800;letter-spacing:-.01em;}
+.topbar-brand span{font-size:9px;color:rgba(218,196,132,0.6);letter-spacing:.1em;text-transform:uppercase;display:block;}
+.topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.milhas-badge{padding:5px 10px;border-radius:20px;background:rgba(124,154,192,0.2);
+  border:1px solid rgba(124,154,192,0.4);font-size:11px;font-weight:600;
+  color:#dac484;white-space:nowrap;}
+#save-all-btn{padding:6px 12px;border-radius:8px;border:1px solid rgba(218,196,132,0.5);
+  background:rgba(218,196,132,0.15);color:#dac484;font-size:11px;font-weight:600;
+  cursor:pointer;white-space:nowrap;}
+
+/* ── Sidebar ── */
+.side-header{padding:14px 14px 12px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.side-total-lbl{font-size:9px;color:rgba(218,196,132,0.6);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;}
+.side-total-val{font-size:20px;font-weight:800;color:#dac484;}
+.side-save-mob{display:none;margin-top:10px;width:100%;padding:8px 0;border-radius:8px;
+  border:1px solid rgba(218,196,132,0.5);background:rgba(218,196,132,0.15);
+  color:#dac484;font-size:12px;font-weight:600;cursor:pointer;}
+.side-group-lbl{font-size:9px;font-weight:700;color:rgba(124,154,192,0.7);
+  letter-spacing:.12em;text-transform:uppercase;padding:10px 14px 4px;}
+.side-btn{width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border:none;border-left:3px solid transparent;cursor:pointer;
+  background:transparent;color:rgba(255,255,255,0.65);
+  font-size:13px;font-weight:400;text-align:left;white-space:nowrap;
+  transition:background .15s,color .15s;min-height:44px;}
+.side-btn.active{background:linear-gradient(90deg,rgba(218,196,132,0.15),rgba(218,196,132,0.05));
+  border-left-color:#dac484;color:#dac484;font-weight:600;}
+.side-btn:hover:not(.active){background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.9);}
+.side-btn .ico{font-size:16px;flex-shrink:0;}
+.side-footer{padding:12px 14px;border-top:1px solid rgba(255,255,255,0.06);
+  font-size:9px;color:rgba(255,255,255,0.2);line-height:1.6;margin-top:auto;}
+
+/* ── Cards & Typography ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:18px 20px;box-shadow:0 2px 8px var(--shadow);margin-bottom:0;}
+.sec-icon{width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--main1),var(--aux));
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  box-shadow:0 2px 8px var(--shadow);}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+.sec-title{font-size:16px;font-weight:700;color:var(--main1);}
+.sec-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.sec-line{height:3px;border-radius:2px;margin-bottom:20px;margin-left:50px;}
+
+.field-lbl{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.06em;
+  text-transform:uppercase;margin-bottom:5px;}
+.field-wrap{display:flex;align-items:center;background:var(--bg);border-radius:8px;
+  border:1.5px solid var(--border);overflow:hidden;transition:border .15s;margin-bottom:13px;}
+.field-wrap:focus-within{border-color:var(--steel);}
+.field-fix{padding:9px 10px;color:var(--muted);font-size:12px;background:var(--bgsec);
+  border-right:1px solid var(--border);white-space:nowrap;font-weight:500;}
+.field-fix.suf{border-right:none;border-left:1px solid var(--border);}
+.field-input{flex:1;background:transparent;border:none;outline:none;
+  color:var(--text);font-size:14px;font-weight:500;padding:9px 12px;}
+/* iOS: prevent zoom on focus */
+@media(max-width:768px){.field-input{font-size:16px;}}
+
+.result-row{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--border);}
+.result-lbl{font-size:12px;color:var(--muted);font-weight:500;}
+.result-val{font-size:13px;font-weight:600;color:var(--aux);}
+.result-val.hi{font-size:16px;font-weight:700;}
+
+.pill{display:inline-block;border-radius:20px;padding:3px 12px;
+  font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;}
+
+.big-stat{text-align:center;padding:16px 14px;border-radius:12px;
+  background:var(--card);border:1px solid var(--border);
+  box-shadow:0 2px 8px var(--shadow);position:relative;overflow:hidden;}
+.big-stat-ico{position:absolute;top:8px;right:10px;font-size:28px;opacity:.06;}
+.big-stat-lbl{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.07em;
+  text-transform:uppercase;margin-bottom:6px;}
+.big-stat-val{font-size:24px;font-weight:800;line-height:1;}
+.big-stat-sub{font-size:10px;color:var(--muted);margin-top:3px;}
+
+/* ── Action Bar ── */
+.act-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px;
+  padding:10px 14px;background:var(--card);border-radius:10px;
+  border:1px solid var(--border);box-shadow:0 1px 4px var(--shadow);}
+.act-bar-lbl{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.05em;
+  text-transform:uppercase;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.act-bar-btns{display:flex;gap:8px;flex-shrink:0;}
+.btn{display:inline-flex;align-items:center;gap:5px;border:none;cursor:pointer;
+  border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;
+  font-family:inherit;transition:filter .15s,transform .1s;min-height:36px;}
+.btn:active{transform:scale(.97);}
+.btn-save{background:linear-gradient(135deg,var(--main1),var(--aux));color:#dac484;}
+.btn-clear{background:rgba(204,0,7,0.1);color:var(--red);border:1px solid rgba(204,0,7,0.3);}
+
+/* ── Grids ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.grid-3b{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+@media(max-width:900px){
+  .grid-3{grid-template-columns:1fr 1fr;}
+  .grid-3b{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:640px){
+  .grid-2,.grid-3,.grid-3b{grid-template-columns:1fr;}
+  #save-all-btn{display:none;}
+  .side-save-mob{display:block;}
+  .topbar-brand span{display:none;}
+  #content{padding:14px 12px 80px;}
+}
+
+/* ── Bar chart (dashboard) ── */
+.prog-bar-wrap{background:var(--bgsec);border-radius:4px;height:6px;overflow:hidden;margin-top:4px;}
+.prog-bar{height:100%;border-radius:4px;transition:width .5s ease;}
+
+/* ── Table inputs ── */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{padding:7px 8px;text-align:left;color:var(--muted);font-weight:600;font-size:10px;
+  background:var(--bgsec);text-transform:uppercase;letter-spacing:.05em;}
+.tbl th.r{text-align:right;}
+.tbl td{padding:4px 6px;border-bottom:1px solid var(--border);}
+.tbl td.lbl{padding:6px 8px;font-weight:500;color:var(--text);}
+.tbl tr:nth-child(even) td{background:rgba(231,231,231,0.4);}
+.tbl tfoot td{padding:7px 8px;background:rgba(218,196,132,0.12);
+  border-top:2px solid rgba(218,196,132,0.4);font-weight:700;font-size:12px;}
+.cell-input{width:100%;text-align:right;background:transparent;
+  border:1px solid var(--border);border-radius:5px;padding:4px 7px;
+  font-family:inherit;font-size:12px;color:var(--text);outline:none;
+  transition:border .15s;}
+.cell-input:focus{border-color:var(--steel);}
+@media(max-width:640px){.cell-input,.field-input{font-size:16px;}}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:20px;right:14px;z-index:9999;
+  padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;
+  box-shadow:0 4px 16px rgba(0,0,0,0.25);display:none;align-items:center;gap:8px;
+  max-width:calc(100vw - 28px);animation:tIn .25s ease;}
+#toast.on{display:flex;}
+@keyframes tIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Footer ── */
+#footer{background:linear-gradient(135deg,var(--main1),var(--aux));
+  padding:14px 16px;text-align:center;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
+  <div class="topbar-logo">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M21 16v-2l-8-5V3.5C13 2.67 12.33 2 11.5 2S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="white"/>
+    </svg>
+  </div>
+  <div class="topbar-brand">
+    <b><span style="color:#dac484">VMM</span> <span style="color:#fff">Turbo</span><span style="color:#7c9ac0">12</span></b>
+    <span>Daniella Pelo Mundo</span>
+  </div>
+  <div class="topbar-right">
+    <button id="save-all-btn" onclick="saveAll()">💾 Salvar tudo</button>
+    <div class="milhas-badge" id="total-badge">✈️ 0</div>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div id="sidebar" class="closed">
+  <div class="side-header">
+    <div class="side-total-lbl">Total em milhas</div>
+    <div class="side-total-val" id="side-total">0</div>
+    <button class="side-save-mob" onclick="saveAll();closeSidebar()">💾 Salvar tudo</button>
+  </div>
+  <div id="side-nav"></div>
+  <div class="side-footer">VMM Turbo12 · v2.0<br>Dados no navegador</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="content"></div>
+  <div id="footer">
+    <span style="font-size:12px;font-weight:700;color:#dac484">VMM Turbo12</span>
+    <span style="font-size:10px;color:rgba(218,196,132,0.5)"> · Daniella Pelo Mundo · Dados salvos no navegador</span>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// VMM Turbo12 — vanilla JS, no dependencies
+
+// ─── Paleta ───
+var C = {
+  main1:'#001430', aux:'#001f4c', steel:'#7c9ac0',
+  gold:'#dac484', red:'#cc0007', green:'#00c853', muted:'#5a6e8a'
+};
+
+// ─── Dados ───
+var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+var MESES_L = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+var PROGS = [
+  {k:'smiles',      n:'Smiles',          col:'#FF6B00', ico:'🟠'},
+  {k:'azul',        n:'Azul Fidelidade', col:'#0057B8', ico:'🔵'},
+  {k:'livelo',      n:'Livelo',          col:'#9B26AF', ico:'🟣'},
+  {k:'tap',         n:'TAP Miles&GO',    col:'#00B4A0', ico:'✈️'},
+  {k:'outros',      n:'Outros Bancários',col:'#27AE60', ico:'🏦'},
+  {k:'iberia',      n:'Iberia Plus',     col:'#dac484', ico:'⭐'},
+  {k:'outrosAereos',n:'Outros Aéreos',   col:'#cc0007', ico:'🛫'},
+  {k:'esfera',      n:'Esfera',          col:'#8E44AD', ico:'💠'},
+  {k:'latam',       n:'Latam Pass',      col:'#C0392B', ico:'🔴'}
+];
+
+var TABS = [
+  {g:'Calculadoras', items:[
+    {id:'dashboard',   lbl:'Painel',         ico:'🌍'},
+    {id:'milheiro',    lbl:'Milheiro',        ico:'💰'},
+    {id:'cartao',      lbl:'Pontos/Cartão',   ico:'💳'},
+    {id:'anuidade',    lbl:'Anuidade',        ico:'📅'},
+    {id:'apps',        lbl:'Apps Pagamento',  ico:'📱'},
+    {id:'clubes',      lbl:'Clubes',          ico:'🏆'},
+    {id:'upgrade',     lbl:'Up/Downgrade',    ico:'🔄'},
+    {id:'compraBonus', lbl:'Compras Bônus',   ico:'🎁'},
+    {id:'transf',      lbl:'Transferências',  ico:'🔀'},
+    {id:'bumerangue',  lbl:'Bumerangue',      ico:'🪃'},
+    {id:'passagem',    lbl:'Passagem Aérea',  ico:'✈️'},
+    {id:'compraPontos',lbl:'Compra Pontos',   ico:'🛒'},
+    {id:'allAccor',    lbl:'ALL Accor',       ico:'🏨'}
+  ]},
+  {g:'Acúmulo Bancário', items:[
+    {id:'acumLivelo',  lbl:'Livelo',          ico:'🟣'},
+    {id:'acumEsfera',  lbl:'Esfera',          ico:'💠'},
+    {id:'acumOutros',  lbl:'Outros',          ico:'🏦'}
+  ]},
+  {g:'Acúmulo Aéreo', items:[
+    {id:'acumSmiles',  lbl:'Smiles',          ico:'🟠'},
+    {id:'acumAzul',    lbl:'Azul Fidelidade', ico:'🔵'},
+    {id:'acumLatam',   lbl:'Latam Pass',      ico:'🔴'},
+    {id:'acumIberia',  lbl:'Iberia Plus',     ico:'⭐'},
+    {id:'acumTap',     lbl:'TAP Miles&GO',    ico:'✈️'}
+  ]},
+  {g:'Meu Portfólio', items:[
+    {id:'minhas',      lbl:'Minhas Milhas',   ico:'🏦'}
+  ]}
+];
+
+var LABELS = {
+  dashboard:'Painel', milheiro:'Milheiro', cartao:'Pontos no Cartão',
+  anuidade:'Anuidade', apps:'Apps Pagamento', clubes:'Clubes de Milhas',
+  upgrade:'Upgrade/Downgrade', compraBonus:'Compras Bonificadas',
+  transf:'Transferências Bonificadas', bumerangue:'Bumerangue',
+  passagem:'Passagem Aérea', compraPontos:'Compra de Pontos',
+  allAccor:'ALL Accor', minhas:'Minhas Milhas',
+  acumLivelo:'Acúmulo LIVELO', acumEsfera:'Acúmulo ESFERA',
+  acumOutros:'Acúmulo OUTROS', acumSmiles:'Acúmulo Smiles',
+  acumAzul:'Acúmulo Azul', acumLatam:'Acúmulo Latam',
+  acumIberia:'Acúmulo Iberia', acumTap:'Acúmulo TAP'
+};
+
+// ─── Estado inicial ───
+function makeZeroMonths() {
+  var o = {};
+  MESES.forEach(function(m){ o[m] = {c:0, a:0}; });
+  return o;
+}
+function makeZeroAcumBanc() {
+  return { clubes:makeZeroMonths(), bonificadas:makeZeroMonths(), compra:makeZeroMonths() };
+}
+function makeZeroAcumAereo() {
+  return { clube:makeZeroMonths(), bonif:makeZeroMonths(), compra:makeZeroMonths(), uso:0 };
+}
+
+var INIT = {
+  milheiro:    { valorPontos:350, qtd:10000 },
+  cartao:      { fatura:130000, conv:5.5, dolar:6, milhas:1420, conv2:4, dolar2:6 },
+  anuidade:    { gastoMensal:10000, meses:12, cotDolar:5.5, convCart:5.5, transBonus:1 },
+  apps:        { boleto:1000, taxa:0.0199, dolar:5.5, fator:5, bonus:1 },
+  clubes:      { mensalidade:42, meses:12, pontosMes:1000, bonusAdesao:15000, bonusTransf:1 },
+  upgrade:     { m1:42,p1:1000,mo1:6,b1:15000,m2:84,p2:2000,mo2:6,b2:12000,anuidade:756 },
+  compraBonus: { valor:3300, ptsPorReal:4.5, dolar:5.5, fator:2.2, transBonus:0 },
+  transf:      { pontosCartao:86000, percMilhas:0.35, milhasDesejadas:50000, percPontos:0.7 },
+  bumerangue:  { pa1:0.8,pl1:0.2,pts1:148000,pa2:0.45,pl2:0.45,pts2:100000,pa3:1,pl3:0.3,pts3:100000 },
+  passagem:    { milhas:69000, taxa:315, custoMil:12, valorDin:1800 },
+  compraPontos:{ qtd:10000, milh:28.5, bonus:0.9, total:13500, milh2:31.5, bonus2:0.9 },
+  allAccor:    { pontos:50000, valorPts:35, conv:3.5, valorEuro:40, cotEuro:6 },
+  minhas: {
+    smiles:{a:515000,c:13.71}, azul:{a:498000,c:14.84}, livelo:{a:126620,c:23.73},
+    tap:{a:200000,c:15.38}, outros:{a:392400,c:10.11}, iberia:{a:70000,c:57.14},
+    outrosAereos:{a:160000,c:65}, esfera:{a:0,c:11.29}, latam:{a:0,c:0}
+  },
+  acumLivelo: makeZeroAcumBanc(),
+  acumEsfera: makeZeroAcumBanc(),
+  acumOutros: makeZeroAcumBanc(),
+  acumSmiles: makeZeroAcumAereo(),
+  acumAzul:   makeZeroAcumAereo(),
+  acumLatam:  makeZeroAcumAereo(),
+  acumIberia: makeZeroAcumAereo(),
+  acumTap:    makeZeroAcumAereo()
+};
+
+var ZEROS = {
+  milheiro:    { valorPontos:0, qtd:0 },
+  cartao:      { fatura:0, conv:0, dolar:0, milhas:0, conv2:0, dolar2:0 },
+  anuidade:    { gastoMensal:0, meses:0, cotDolar:0, convCart:0, transBonus:0 },
+  apps:        { boleto:0, taxa:0, dolar:0, fator:0, bonus:0 },
+  clubes:      { mensalidade:0, meses:0, pontosMes:0, bonusAdesao:0, bonusTransf:0 },
+  upgrade:     { m1:0,p1:0,mo1:0,b1:0,m2:0,p2:0,mo2:0,b2:0,anuidade:0 },
+  compraBonus: { valor:0, ptsPorReal:0, dolar:0, fator:0, transBonus:0 },
+  transf:      { pontosCartao:0, percMilhas:0, milhasDesejadas:0, percPontos:0 },
+  bumerangue:  { pa1:0,pl1:0,pts1:0,pa2:0,pl2:0,pts2:0,pa3:0,pl3:0,pts3:0 },
+  passagem:    { milhas:0, taxa:0, custoMil:0, valorDin:0 },
+  compraPontos:{ qtd:0, milh:0, bonus:0, total:0, milh2:0, bonus2:0 },
+  allAccor:    { pontos:0, valorPts:0, conv:0, valorEuro:0, cotEuro:0 },
+  minhas:      { smiles:{a:0,c:0},azul:{a:0,c:0},livelo:{a:0,c:0},tap:{a:0,c:0},outros:{a:0,c:0},iberia:{a:0,c:0},outrosAereos:{a:0,c:0},esfera:{a:0,c:0},latam:{a:0,c:0} },
+  acumLivelo:  makeZeroAcumBanc(),
+  acumEsfera:  makeZeroAcumBanc(),
+  acumOutros:  makeZeroAcumBanc(),
+  acumSmiles:  makeZeroAcumAereo(),
+  acumAzul:    makeZeroAcumAereo(),
+  acumLatam:   makeZeroAcumAereo(),
+  acumIberia:  makeZeroAcumAereo(),
+  acumTap:     makeZeroAcumAereo()
+};
+
+// ─── Utils (defined FIRST — Safari iOS requires functions before use) ───
+function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+function deepMerge(base, over) {
+  var r = deepClone(base);
+  for (var k in over) {
+    if (over.hasOwnProperty(k)) {
+      if (typeof over[k] === 'object' && over[k] !== null && !Array.isArray(over[k]) &&
+          typeof r[k] === 'object' && r[k] !== null) {
+        r[k] = deepMerge(r[k], over[k]);
+      } else {
+        r[k] = over[k];
+      }
+    }
+  }
+  return r;
+}
+function lsSave(d) { try { localStorage.setItem('vmm_t12', JSON.stringify(d)); } catch(e){} }
+function lsLoad()  { try { var r=localStorage.getItem('vmm_t12'); return r?JSON.parse(r):null; } catch(e){ return null; } }
+
+// ─── App state ───
+var S = deepMerge(deepClone(INIT), lsLoad() || {});
+var currentTab = 'dashboard';
+var sideOpen = false;
+
+// ─── Number formatting (manual — toLocaleString unreliable on iOS local files) ───
+function fmtNum(v, decimals) {
+  if (typeof v !== 'number' || isNaN(v) || !isFinite(v)) return '—';
+  decimals = decimals || 0;
+  var neg = v < 0;
+  var abs = Math.abs(v);
+  var factor = Math.pow(10, decimals);
+  var rounded = Math.round(abs * factor) / factor;
+  var parts = rounded.toFixed(decimals).split('.');
+  // add thousands separator (pt-BR style: dot)
+  var intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  var result = intPart + (decimals > 0 ? ',' + parts[1] : '');
+  return (neg ? '-' : '') + result;
+}
+
+function fmt(v, d) {
+  if (typeof v !== 'number' || isNaN(v)) return '—';
+  return fmtNum(v, d || 0);
+}
+function fmtR(v, d) {
+  if (typeof v !== 'number' || isNaN(v)) return '—';
+  d = (d === undefined) ? 2 : d;
+  return 'R$ ' + fmtNum(v, d);
+}
+function numToDisplay(v) {
+  if (!v && v !== 0) return '';
+  if (v === 0) return '';
+  // show decimals only if needed
+  var s = String(parseFloat(v));
+  var dec = s.indexOf('.') >= 0 ? s.split('.')[1].length : 0;
+  dec = Math.min(dec, 6);
+  return fmtNum(v, dec);
+}
+function pct(v) { return fmt(v*100, 2) + '%'; }
+
+// parse string → number (supports pt-BR 1.000,50 and plain 1000.50)
+function parseNum(s) {
+  if (s === '' || s === null || s === undefined) return 0;
+  s = String(s).trim();
+  if (s === '' || s === '-') return 0;
+  var hasComma = s.indexOf(',') >= 0;
+  var dotCount = (s.match(/\./g)||[]).length;
+  var norm;
+  if (hasComma) {
+    norm = s.replace(/\./g,'').replace(',','.');
+  } else if (dotCount > 1) {
+    norm = s.replace(/\./g,'');
+  } else {
+    norm = s;
+  }
+  return parseFloat(norm) || 0;
+}
+function pctToDisplay(v) {
+  if (!v) return '';
+  return String(parseFloat((v*100).toPrecision(7)));
+}
+
+// ─── Toast ───
+var toastTimer;
+function showToast(msg, color) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = color || C.green;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('on'); }, 2400);
+}
+
+// ─── Sidebar ───
+function toggleSidebar() { sideOpen ? closeSidebar() : openSidebar(); }
+function openSidebar() {
+  sideOpen = true;
+  document.getElementById('sidebar').classList.remove('closed');
+  document.getElementById('toggle-btn').classList.add('open');
+  document.getElementById('toggle-btn').textContent = '✕';
+  var isMob = window.innerWidth <= 900;
+  if (isMob) {
+    document.getElementById('overlay').classList.add('on');
+  } else {
+    document.getElementById('main').classList.add('shifted');
+  }
+}
+function closeSidebar() {
+  sideOpen = false;
+  document.getElementById('sidebar').classList.add('closed');
+  document.getElementById('toggle-btn').classList.remove('open');
+  document.getElementById('toggle-btn').textContent = '☰';
+  document.getElementById('overlay').classList.remove('on');
+  document.getElementById('main').classList.remove('shifted');
+}
+
+// ─── Save / Clear ───
+function saveAll() {
+  lsSave(S);
+  showToast('✅ Todos os dados salvos!', C.main1);
+}
+function saveTab(key) {
+  lsSave(S);
+  showToast('💾 ' + (LABELS[key]||key) + ' salvo!', C.main1);
+}
+function clearTab(key) {
+  if (!confirm('Zerar lançamentos de "' + (LABELS[key]||key) + '"?\n\nOs totais serão recalculados automaticamente.')) return;
+  S[key] = deepClone(ZEROS[key]);
+  lsSave(S);
+  showToast('🗑️ ' + (LABELS[key]||key) + ' zerado', C.red);
+  navigate(currentTab);
+}
+
+// ─── Input helpers ───
+// Creates a number input that displays formatted on blur
+function numField(label, val, onChange, prefix, suffix) {
+  var id = 'f_' + Math.random().toString(36).substr(2,8);
+  var isBlurred = true;
+  var html = '<div class="field-lbl">' + label + '</div>';
+  html += '<div class="field-wrap"' + ' id="fw_'+id+'">';
+  if (prefix) html += '<div class="field-fix">' + prefix + '</div>';
+  html += '<input class="field-input" type="text" inputmode="decimal" id="' + id + '" value="' + numToDisplay(val) + '" placeholder="0">';
+  if (suffix) html += '<div class="field-fix suf">' + suffix + '</div>';
+  html += '</div>';
+
+  setTimeout(function() {
+    var inp = document.getElementById(id);
+    if (!inp) return;
+    inp.addEventListener('focus', function() {
+      isBlurred = false;
+      var n = parseNum(this.value);
+      this.value = n === 0 ? '' : String(parseFloat(n));
+    });
+    inp.addEventListener('input', function() {
+      var raw = this.value;
+      var n = parseNum(raw);
+      onChange(n);
+      updateResults();
+    });
+    inp.addEventListener('blur', function() {
+      isBlurred = true;
+      var n = parseNum(this.value);
+      onChange(n);
+      this.value = numToDisplay(n);
+      updateResults();
+    });
+  }, 0);
+
+  return html;
+}
+
+function pctField(label, val, onChange) {
+  var id = 'f_' + Math.random().toString(36).substr(2,8);
+  var displayVal = pctToDisplay(val);
+  var html = '<div class="field-lbl">' + label + '</div>';
+  html += '<div class="field-wrap">';
+  html += '<input class="field-input" type="text" inputmode="decimal" id="' + id + '" value="' + displayVal + '" placeholder="0">';
+  html += '<div class="field-fix suf">%</div>';
+  html += '</div>';
+
+  setTimeout(function() {
+    var inp = document.getElementById(id);
+    if (!inp) return;
+    inp.addEventListener('input', function() {
+      var n = parseNum(this.value.replace(',','.'));
+      onChange(n / 100);
+      updateResults();
+    });
+    inp.addEventListener('blur', function() {
+      var n = parseNum(this.value.replace(',','.'));
+      onChange(n / 100);
+      this.value = pctToDisplay(n/100);
+      updateResults();
+    });
+  }, 0);
+
+  return html;
+}
+
+function cellInput(val, onChange) {
+  var id = 'c_' + Math.random().toString(36).substr(2,8);
+  var html = '<input class="cell-input" type="text" inputmode="decimal" id="' + id + '" value="' + numToDisplay(val) + '" placeholder="0">';
+  setTimeout(function() {
+    var inp = document.getElementById(id);
+    if (!inp) return;
+    inp.addEventListener('focus', function() {
+      var n = parseNum(this.value);
+      this.value = n === 0 ? '' : String(parseFloat(n));
+    });
+    inp.addEventListener('input', function() {
+      onChange(parseNum(this.value));
+      updateResults();
+    });
+    inp.addEventListener('blur', function() {
+      var n = parseNum(this.value);
+      onChange(n);
+      this.value = numToDisplay(n);
+      updateResults();
+    });
+  }, 0);
+  return html;
+}
+
+// ─── UI helpers ───
+function card(inner, style) {
+  return '<div class="card" ' + (style?'style="'+style+'"':'') + '>' + inner + '</div>';
+}
+function secHead(ico, title, sub, accentColor) {
+  accentColor = accentColor || C.steel;
+  return '<div class="sec-head"><div class="sec-icon">' + ico + '</div>' +
+    '<div><div class="sec-title">' + title + '</div>' +
+    (sub ? '<div class="sec-sub">' + sub + '</div>' : '') +
+    '</div></div>' +
+    '<div class="sec-line" style="background:linear-gradient(90deg,' + accentColor + ',' + accentColor + '33,transparent);margin-bottom:18px;"></div>';
+}
+function actionBar(key) {
+  return '<div class="act-bar">' +
+    '<div class="act-bar-lbl">📋 ' + (LABELS[key]||key) + '</div>' +
+    '<div class="act-bar-btns">' +
+    '<button class="btn btn-save" onclick="saveTab(\''+key+'\')">💾 Salvar</button>' +
+    '<button class="btn btn-clear" onclick="clearTab(\''+key+'\')">🗑️ Zerar</button>' +
+    '</div></div>';
+}
+function resultRow(lbl, val, hi, color) {
+  var cls = 'result-val' + (hi ? ' hi' : '');
+  var style = color ? ' style="color:' + color + '"' : '';
+  return '<div class="result-row"><span class="result-lbl">' + lbl + '</span>' +
+    '<span class="' + cls + '"' + style + '>' + val + '</span></div>';
+}
+function bigStat(lbl, val, ico, color, sub) {
+  color = color || C.steel;
+  return '<div class="big-stat" style="border-top:3px solid '+color+'">' +
+    '<div class="big-stat-ico">' + ico + '</div>' +
+    '<div class="big-stat-lbl">' + lbl + '</div>' +
+    '<div class="big-stat-val" style="color:'+color+'">' + val + '</div>' +
+    (sub ? '<div class="big-stat-sub">' + sub + '</div>' : '') +
+    '</div>';
+}
+function pill(txt, color) {
+  color = color || C.steel;
+  return '<span class="pill" style="background:'+color+'22;color:'+color+';border:1px solid '+color+'44">'+txt+'</span>';
+}
+
+// ─── Update results (re-renders result values without full re-render) ───
+// Actually we re-render the whole content for simplicity
+function updateResults() {
+  var tab = currentTab;
+  // Only re-render results section — but for simplicity re-render whole tab
+  // (inputs preserve their own DOM values via closure)
+  renderResults(tab);
+}
+
+// ─── Navigation ───
+function navigate(id) {
+  currentTab = id;
+  // Update sidebar active state
+  var btns = document.querySelectorAll('.side-btn');
+  for (var i = 0; i < btns.length; i++) {
+    if (btns[i].dataset.id === id) {
+      btns[i].classList.add('active');
+    } else {
+      btns[i].classList.remove('active');
+    }
+  }
+  // Close sidebar on mobile
+  if (window.innerWidth <= 900) closeSidebar();
+  // Render content
+  document.getElementById('content').innerHTML = renderTab(id);
+  updateTotals();
+}
+
+// ─── Render sidebar ───
+function renderSidebar() {
+  var nav = document.getElementById('side-nav');
+  var html = '';
+  TABS.forEach(function(group) {
+    html += '<div class="side-group-lbl">' + group.g + '</div>';
+    group.items.forEach(function(t) {
+      html += '<button class="side-btn' + (t.id === currentTab ? ' active' : '') + '" data-id="' + t.id + '" onclick="navigate(\'' + t.id + '\')">' +
+        '<span class="ico">' + t.ico + '</span>' + t.lbl + '</button>';
+    });
+  });
+  nav.innerHTML = html;
+}
+
+// ─── Update total milhas display ───
+function updateTotals() {
+  var total = 0;
+  PROGS.forEach(function(p) { total += (S.minhas[p.k] && S.minhas[p.k].a) || 0; });
+  var fmtd = fmt(total);
+  document.getElementById('total-badge').textContent = '✈️ ' + fmtd;
+  document.getElementById('side-total').textContent = fmtd;
+}
+
+// ─── Render results only (called on input change) ───
+function renderResults(tab) {
+  var el = document.getElementById('results-'+tab);
+  if (!el) return;
+  el.innerHTML = calcResults(tab);
+  updateTotals();
+}
+
+function calcResults(tab) {
+  var d = S[tab];
+  if (!d) return '';
+  var html = '';
+
+  if (tab === 'milheiro') {
+    var custo = d.qtd > 0 ? (d.valorPontos / d.qtd) * 1000 : 0;
+    var q = custo < 18 ? ['Excelente',C.green] : custo < 28 ? ['Bom',C.steel] : custo < 40 ? ['Razoável','#f39c12'] : ['Caro',C.red];
+    html = resultRow('Custo do Milheiro', fmtR(custo), true, C.steel);
+    html += '<div style="margin-top:14px;text-align:center">' + pill(q[0], q[1]) + '</div>';
+    html += '<div style="margin-top:12px;padding:12px;background:rgba(0,20,48,0.06);border-radius:10px;font-size:11px;color:var(--muted);line-height:1.8;text-align:center">' +
+      '<b style="color:#dac484">Livelo</b> ~R$35 &nbsp;·&nbsp; <b style="color:#FF6B00">Smiles</b> ~R$15 &nbsp;·&nbsp; <b style="color:#0057B8">Azul</b> ~R$14</div>';
+  }
+  else if (tab === 'cartao') {
+    var ptsA = d.conv > 0 ? (d.fatura / d.dolar) / d.conv : 0;
+    var gastoNec = d.milhas * d.conv2 * d.dolar2;
+    html = resultRow('Pontos creditados', fmt(ptsA, 0), true, C.steel);
+    html += '<hr style="border:none;border-top:1px solid var(--border);margin:12px 0">';
+    html += resultRow('Gasto necessário no cartão', fmtR(gastoNec), true, C.gold);
+  }
+  else if (tab === 'anuidade') {
+    var ga = d.gastoMensal * d.meses;
+    var em$ = d.cotDolar > 0 ? ga / d.cotDolar : 0;
+    var pts = d.convCart > 0 ? ga / d.convCart : 0;
+    var ptsB = pts * (1 + d.transBonus);
+    html = resultRow('Gasto anual', fmtR(ga)) +
+      resultRow('Valor em dólar', '$ ' + fmt(em$, 0)) +
+      resultRow('Pontos (base)', fmt(pts, 0)) +
+      resultRow('Pontos com bônus', fmt(ptsB, 0), true);
+  }
+  else if (tab === 'apps') {
+    var taxa2 = d.boleto * d.taxa;
+    var em2 = d.dolar > 0 ? taxa2 / d.dolar : 0;
+    var qp = d.fator > 0 ? em2 / d.fator : 0;
+    var milh = qp * (1 + d.bonus);
+    var mEf = milh > 0 ? (taxa2 / milh) * 1000 : 0;
+    var ok = mEf > 0 && mEf < 35;
+    html = resultRow('Taxa', fmtR(taxa2)) +
+      resultRow('Em dólar', '$ ' + fmt(em2, 2)) +
+      resultRow('Pontos', fmt(qp, 0)) +
+      resultRow('Milhas (c/ bônus)', fmt(milh, 0)) +
+      resultRow('Custo efetivo/mil', fmtR(mEf), true, ok ? C.green : C.red);
+    if (mEf > 0) html += '<div style="margin-top:12px;padding:10px;border-radius:8px;text-align:center;background:' + (ok?'rgba(0,200,83,0.08)':'rgba(204,0,7,0.08)') + ';border:1px solid ' + (ok?C.green:C.red) + '44;color:' + (ok?C.green:C.red) + ';font-weight:600;font-size:13px">' + (ok?'✅ Vale a pena!':'⚠️ Verifique se compensa') + '</div>';
+  }
+  else if (tab === 'clubes') {
+    var custo2 = d.mensalidade * d.meses;
+    var ps = d.pontosMes * d.meses + d.bonusAdesao;
+    var m1 = ps > 0 ? (custo2/ps)*1000 : 0;
+    var pc = ps * (1 + d.bonusTransf);
+    var m2 = pc > 0 ? (custo2/pc)*1000 : 0;
+    html = resultRow('Custo total', fmtR(custo2)) +
+      resultRow('Pontos sem bônus', fmt(ps)) +
+      resultRow('Custo milheiro (sem bônus)', fmtR(m1)) +
+      resultRow('Pontos com transf.', fmt(pc)) +
+      resultRow('Custo final / mil', fmtR(m2), true);
+    if (m2 > 0) html += '<div style="margin-top:10px">' + pill(m2<15?'Excelente':m2<25?'Bom':'Elevado', m2<15?C.green:m2<25?C.steel:C.red) + '</div>';
+  }
+  else if (tab === 'upgrade') {
+    var c1=d.m1*d.mo1, p1=d.p1*d.mo1+d.b1;
+    var c2=d.m2*d.mo2, p2=d.p2*d.mo2+d.b2;
+    var cT=c1+c2+d.anuidade, pT=p1+p2;
+    var mT=pT>0?(cT/pT)*1000:0;
+    html = '<div class="grid-3" style="gap:10px;margin-top:8px">' +
+      bigStat('Custo Total', fmtR(cT), '💸', C.red) +
+      bigStat('Pontos Totais', fmt(pT), '🎯', C.green) +
+      bigStat('Custo/Mil', fmtR(mT), '💰', C.gold) +
+      '</div>';
+  }
+  else if (tab === 'compraBonus') {
+    var pp = d.dolar > 0 ? (d.valor/d.dolar)*d.ptsPorReal : 0;
+    var pc2 = d.fator > 0 ? d.valor/d.fator : 0;
+    var base = pp + pc2;
+    var total2 = d.transBonus > 0 ? base*(1+d.transBonus) : base;
+    html = resultRow('Pontos pelo programa', fmt(pp,0)) +
+      resultRow('Pontos pelo cartão', fmt(pc2,0)) +
+      resultRow('Total base', fmt(base,0)) +
+      resultRow('Total com bônus', fmt(total2,0), true);
+  }
+  else if (tab === 'transf') {
+    var bA = d.pontosCartao * d.percMilhas;
+    var tA = d.pontosCartao + bA;
+    var nec = d.percPontos > -1 ? d.milhasDesejadas / (1 + d.percPontos) : 0;
+    var bB = nec * d.percPontos;
+    html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">' +
+      '<div>' +
+        '<div style="font-size:11px;font-weight:700;color:'+C.steel+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Pontos → Milhas</div>' +
+        resultRow('Bônus', fmt(bA,0)) + resultRow('Total', fmt(tA,0), true, C.steel) +
+      '</div>' +
+      '<div>' +
+        '<div style="font-size:11px;font-weight:700;color:'+C.gold+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Milhas → Pontos</div>' +
+        resultRow('Bônus retorno', fmt(bB,0)) + resultRow('Pontos necessários', fmt(nec,0), true, C.gold) +
+      '</div></div>';
+  }
+  else if (tab === 'bumerangue') {
+    html = '<div class="grid-3b" style="gap:10px">';
+    [[d.pa1,d.pl1,d.pts1,'Estratégia 1',C.steel],[d.pa2,d.pl2,d.pts2,'Estratégia 2',C.gold],[d.pa3,d.pl3,d.pts3,'Estratégia 3',C.main1]].forEach(function(st) {
+      var saldo = st[2]*(1+st[0]), retorno = st[2]*st[1];
+      var bonus = (st[2]>0 && st[2]*(1-st[1])>0) ? (st[2]*(1+st[0]))/(st[2]-st[2]*st[1]) : 0;
+      html += '<div>' +
+        '<div style="font-size:11px;font-weight:700;color:'+st[4]+';margin-bottom:8px">'+st[3]+'</div>' +
+        resultRow('Saldo aéreo', fmt(saldo,0)) + resultRow('Retorno Livelo', fmt(retorno,0)) +
+        resultRow('Bônus final', bonus>0 ? bonus.toFixed(2)+'×' : '—', true, st[4]) +
+        '</div>';
+    });
+    html += '</div>';
+  }
+  else if (tab === 'passagem') {
+    var cm = (d.milhas*d.custoMil)/1000 + d.taxa;
+    var econ = d.valorDin - cm;
+    var perc = d.valorDin > 0 ? (econ/d.valorDin)*100 : 0;
+    var okP = econ > 0;
+    html = resultRow('Custo c/ milhas', fmtR(cm)) +
+      resultRow('Valor em dinheiro', fmtR(d.valorDin)) +
+      resultRow('Economia', fmtR(econ), true, okP?C.green:C.red);
+    if (d.valorDin > 0) {
+      html += '<div style="margin-top:14px;padding:16px;border-radius:12px;text-align:center;background:' + (okP?'linear-gradient(135deg,'+C.main1+','+C.aux+')':'rgba(204,0,7,0.08)') + ';border:2px solid '+(okP?C.steel:C.red)+'44">' +
+        '<div style="font-size:32px;margin-bottom:6px">'+(okP?'✅':'❌')+'</div>' +
+        '<div style="font-size:14px;font-weight:700;color:'+(okP?C.gold:C.red)+'">'+(okP?'Vantajoso emitir!':'Melhor pagar em dinheiro')+'</div>' +
+        '<div style="font-size:32px;font-weight:800;color:'+(okP?C.gold:C.red)+';margin-top:4px">'+Math.abs(perc).toFixed(1)+'%</div>' +
+        '<div style="font-size:11px;color:'+(okP?'rgba(255,255,255,.6)':'var(--muted)')+'">'+( okP?'de economia':'mais caro')+'</div>' +
+        '</div>';
+    }
+  }
+  else if (tab === 'compraPontos') {
+    var tC=(d.qtd*d.milh)/1000, sB=d.qtd*(1+d.bonus), cF=sB>0?(tC/sB)*1000:0;
+    var qV=d.milh2>0?d.total/(d.milh2/1000):0, sBV=qV*(1+d.bonus2), cFV=qV>0?(d.total/sBV)*1000:0;
+    html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">' +
+      '<div>' +
+        '<div style="font-size:11px;font-weight:700;color:'+C.steel+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Por Quantidade</div>' +
+        resultRow('Custo total', fmtR(tC)) + resultRow('Saldo total', fmt(sB,0)) + resultRow('Custo/mil', fmtR(cF), true, C.steel) +
+      '</div>' +
+      '<div>' +
+        '<div style="font-size:11px;font-weight:700;color:'+C.gold+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Por Valor</div>' +
+        resultRow('Qtd de pontos', fmt(qV,0)) + resultRow('Saldo total', fmt(sBV,0)) + resultRow('Custo/mil', fmtR(cFV), true, C.gold) +
+      '</div></div>';
+  }
+  else if (tab === 'allAccor') {
+    var pAll = d.conv>0 ? d.pontos/d.conv : 0;
+    var vEuro = (pAll/1000)*d.valorEuro;
+    var eGer = pAll>0 ? ((d.pontos*d.valorPts/1000)/pAll)*d.cotEuro : 0;
+    html = resultRow('Pontos ALL', fmt(pAll,0)) + resultRow('Valor total €', '€ '+fmt(vEuro,2)) + resultRow('Valor do Euro gerado', fmtR(eGer), true, C.gold);
+  }
+  return html;
+}
+
+// ─── Tab renderers ───
+function renderTab(id) {
+  if (id === 'dashboard') return renderDashboard();
+  if (id === 'minhas') return renderMinhas();
+  if (id.indexOf('acum') === 0) return renderAcum(id);
+  return renderCalc(id);
+}
+
+function renderDashboard() {
+  var m = S.minhas;
+  var total = 0, totalCusto = 0;
+  PROGS.forEach(function(p) {
+    total += (m[p.k]&&m[p.k].a)||0;
+    totalCusto += ((m[p.k]&&m[p.k].a)||0) * ((m[p.k]&&m[p.k].c)||0) / 1000;
+  });
+  var custoG = total > 0 ? (totalCusto/total)*1000 : 0;
+  var maxA = 1;
+  PROGS.forEach(function(p){ if ((m[p.k]&&m[p.k].a||0) > maxA) maxA = m[p.k].a; });
+
+  var html = secHead('🌍', 'Meu Painel de Milhas', 'Visão consolidada', C.gold);
+  html += '<div class="grid-3" style="margin-bottom:18px">' +
+    bigStat('Total Acumulado', fmt(total), '✈️', C.steel, 'milhas / pontos') +
+    bigStat('Custo Médio / Mil', fmtR(custoG), '💸', C.gold, 'por milheiro') +
+    bigStat('Programas Ativos', String(PROGS.filter(function(p){ return (m[p.k]&&m[p.k].a||0)>0; }).length), '📊', C.main1, 'com saldo') +
+    '</div>';
+
+  html += '<div class="card">';
+  html += '<div style="font-size:11px;font-weight:700;color:'+C.aux+';letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px">Saldo por Programa</div>';
+  PROGS.forEach(function(p) {
+    var a = (m[p.k]&&m[p.k].a)||0, c = (m[p.k]&&m[p.k].c)||0;
+    var w = Math.round((a/maxA)*100);
+    html += '<div style="margin-bottom:12px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+        '<span style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:7px">' + p.ico + ' ' + p.n + '</span>' +
+        '<div style="display:flex;gap:12px;align-items:center">' +
+          '<span style="font-size:11px;color:var(--muted)">R$'+c.toFixed(2)+'/mil</span>' +
+          '<span style="font-size:14px;font-weight:700;color:'+p.col+'">'+fmt(a)+'</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="prog-bar-wrap"><div class="prog-bar" style="width:'+w+'%;background:linear-gradient(90deg,'+C.steel+','+p.col+')"></div></div>' +
+      '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+// ─── Render calculator tabs ───
+var CALC_CONFIGS = {
+  milheiro: {
+    icon:'💰', title:'Cálculo do Milheiro', sub:'Quanto você paga por mil pontos/milhas?',
+    fields: function(d) {
+      return numField('Valor dos pontos/milhas', d.valorPontos, function(v){d.valorPontos=v;}, 'R$') +
+             numField('Quantidade de pontos/milhas', d.qtd, function(v){d.qtd=v;});
+    }
+  },
+  cartao: {
+    icon:'💳', title:'Pontos no Cartão', sub:'Pontos pela fatura e gasto pelo saldo',
+    fields: function(d) {
+      return '<div style="font-size:11px;font-weight:700;color:'+C.steel+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Fatura → Pontos</div>' +
+        numField('Valor da fatura', d.fatura, function(v){d.fatura=v;}, 'R$') +
+        numField('Conversor do cartão', d.conv, function(v){d.conv=v;}, null, 'pts/$') +
+        numField('Dólar da fatura', d.dolar, function(v){d.dolar=v;}, 'R$') +
+        '<hr style="border:none;border-top:1px solid var(--border);margin:12px 0">' +
+        '<div style="font-size:11px;font-weight:700;color:'+C.gold+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Saldo → Gasto no Cartão</div>' +
+        numField('Total de milhas', d.milhas, function(v){d.milhas=v;}) +
+        numField('Conversor do cartão', d.conv2, function(v){d.conv2=v;}, null, 'pts/$') +
+        numField('Dólar da fatura', d.dolar2, function(v){d.dolar2=v;}, 'R$');
+    }
+  },
+  anuidade: {
+    icon:'📅', title:'Calculando Anuidade', sub:'A anuidade vale os pontos acumulados?',
+    fields: function(d) {
+      return numField('Gasto mensal no cartão', d.gastoMensal, function(v){d.gastoMensal=v;}, 'R$') +
+        numField('Quantidade de meses', d.meses, function(v){d.meses=v;}, null, 'meses') +
+        numField('Cotação do dólar', d.cotDolar, function(v){d.cotDolar=v;}, 'R$') +
+        numField('Conversor do cartão', d.convCart, function(v){d.convCart=v;}, null, 'pts/$') +
+        pctField('% Transferência bonificada', d.transBonus, function(v){d.transBonus=v;});
+    }
+  },
+  apps: {
+    icon:'📱', title:'Aplicativos de Pagamento', sub:'Vale usar apps de boleto para acumular milhas?',
+    fields: function(d) {
+      return numField('Valor do boleto', d.boleto, function(v){d.boleto=v;}, 'R$') +
+        pctField('Taxa cobrada pelo app', d.taxa, function(v){d.taxa=v;}) +
+        numField('Valor do dólar', d.dolar, function(v){d.dolar=v;}, 'R$') +
+        numField('Fator de conversão do cartão', d.fator, function(v){d.fator=v;}, null, 'pts/$') +
+        pctField('% Transferência bonificada', d.bonus, function(v){d.bonus=v;});
+    }
+  },
+  clubes: {
+    icon:'🏆', title:'Clubes de Milhas', sub:'Custo real do milheiro nos clubes de assinatura',
+    fields: function(d) {
+      return numField('Mensalidade', d.mensalidade, function(v){d.mensalidade=v;}, 'R$') +
+        numField('Quantidade de meses', d.meses, function(v){d.meses=v;}, null, 'meses') +
+        numField('Pontos/milhas por mês', d.pontosMes, function(v){d.pontosMes=v;}) +
+        numField('Bônus de adesão', d.bonusAdesao, function(v){d.bonusAdesao=v;}) +
+        pctField('% Bônus de transferência', d.bonusTransf, function(v){d.bonusTransf=v;});
+    }
+  },
+  upgrade: {
+    icon:'🔄', title:'Upgrade | Downgrade', sub:'Estratégia de troca de planos nos clubes de milhas',
+    fields: function(d) {
+      return '<div class="grid-2">' +
+        '<div><div style="font-size:11px;font-weight:700;color:'+C.steel+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">1º Plano</div>' +
+        numField('Mensalidade', d.m1, function(v){d.m1=v;}, 'R$') +
+        numField('Milhas/mês', d.p1, function(v){d.p1=v;}) +
+        numField('Meses', d.mo1, function(v){d.mo1=v;}, null, 'meses') +
+        numField('Bônus de adesão', d.b1, function(v){d.b1=v;}) + '</div>' +
+        '<div><div style="font-size:11px;font-weight:700;color:'+C.gold+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">2º Plano</div>' +
+        numField('Mensalidade', d.m2, function(v){d.m2=v;}, 'R$') +
+        numField('Milhas/mês', d.p2, function(v){d.p2=v;}) +
+        numField('Meses', d.mo2, function(v){d.mo2=v;}, null, 'meses') +
+        numField('Bônus de adesão', d.b2, function(v){d.b2=v;}) + '</div>' +
+        '</div>' +
+        numField('Anuidade dos planos', d.anuidade, function(v){d.anuidade=v;}, 'R$');
+    }
+  },
+  compraBonus: {
+    icon:'🎁', title:'Compras Bonificadas', sub:'Pontos acumulados em compras com bônus',
+    fields: function(d) {
+      return numField('Valor da compra', d.valor, function(v){d.valor=v;}, 'R$') +
+        numField('Pontos por real no programa', d.ptsPorReal, function(v){d.ptsPorReal=v;}, null, 'pts/R$') +
+        numField('Valor do dólar', d.dolar, function(v){d.dolar=v;}, 'R$') +
+        numField('Fator de pontuação do cartão', d.fator, function(v){d.fator=v;}, null, 'pts/$') +
+        pctField('% Transferência bonificada', d.transBonus, function(v){d.transBonus=v;});
+    }
+  },
+  transf: {
+    icon:'🔀', title:'Transferências Bonificadas', sub:'Calcule os ganhos em promoções de transferência',
+    fields: function(d) {
+      return numField('Pontos do cartão', d.pontosCartao, function(v){d.pontosCartao=v;}) +
+        pctField('% Bônus na transferência (pontos→milhas)', d.percMilhas, function(v){d.percMilhas=v;}) +
+        numField('Milhas desejadas', d.milhasDesejadas, function(v){d.milhasDesejadas=v;}) +
+        pctField('% Bônus retorno (milhas→pontos)', d.percPontos, function(v){d.percPontos=v;});
+    }
+  },
+  bumerangue: {
+    icon:'🪃', title:'Bumerangue', sub:'Transferência para programa aéreo com retorno ao Livelo',
+    fields: function(d) {
+      var html = '<div class="grid-3b">';
+      var strats = [
+        ['Estratégia 1','pa1','pl1','pts1',C.steel],
+        ['Estratégia 2','pa2','pl2','pts2',C.gold],
+        ['Estratégia 3','pa3','pl3','pts3',C.main1]
+      ];
+      strats.forEach(function(st) {
+        html += '<div><div style="font-size:11px;font-weight:700;color:'+st[4]+';margin-bottom:10px">'+st[0]+'</div>' +
+          pctField('% bônus aéreo', d[st[1]], (function(k){return function(v){d[k]=v;};})(st[1])) +
+          pctField('% retorno Livelo', d[st[2]], (function(k){return function(v){d[k]=v;};})(st[2])) +
+          numField('Pontos a transferir', d[st[3]], (function(k){return function(v){d[k]=v;};})(st[3])) +
+          '</div>';
+      });
+      return html + '</div>';
+    }
+  },
+  passagem: {
+    icon:'✈️', title:'Passagem Aérea', sub:'Vale a pena emitir com milhas?',
+    fields: function(d) {
+      return numField('Valor em milhas', d.milhas, function(v){d.milhas=v;}, null, 'milhas') +
+        numField('Taxa de embarque', d.taxa, function(v){d.taxa=v;}, 'R$') +
+        numField('Custo do seu milheiro', d.custoMil, function(v){d.custoMil=v;}, 'R$') +
+        numField('Valor em dinheiro', d.valorDin, function(v){d.valorDin=v;}, 'R$');
+    }
+  },
+  compraPontos: {
+    icon:'🛒', title:'Compra de Pontos', sub:'Custo final com bônus de transferência',
+    fields: function(d) {
+      return '<div class="grid-2">' +
+        '<div><div style="font-size:11px;font-weight:700;color:'+C.steel+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Por Quantidade</div>' +
+        numField('Qtd de pontos', d.qtd, function(v){d.qtd=v;}) +
+        numField('Valor do milheiro', d.milh, function(v){d.milh=v;}, 'R$') +
+        pctField('% bônus na transferência', d.bonus, function(v){d.bonus=v;}) + '</div>' +
+        '<div><div style="font-size:11px;font-weight:700;color:'+C.gold+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Por Valor</div>' +
+        numField('Valor total', d.total, function(v){d.total=v;}, 'R$') +
+        numField('Valor do milheiro', d.milh2, function(v){d.milh2=v;}, 'R$') +
+        pctField('% bônus na transferência', d.bonus2, function(v){d.bonus2=v;}) + '</div>' +
+        '</div>';
+    }
+  },
+  allAccor: {
+    icon:'🏨', title:'ALL Accor', sub:'Converta pontos Livelo/Esfera em ALL Accor',
+    fields: function(d) {
+      return numField('Quantidade de pontos', d.pontos, function(v){d.pontos=v;}) +
+        numField('Valor dos pontos (R$/mil)', d.valorPts, function(v){d.valorPts=v;}, 'R$') +
+        numField('Conversor para ALL', d.conv, function(v){d.conv=v;}, null, 'pts/ALL') +
+        numField('Valor ALL (€/1000 pts)', d.valorEuro, function(v){d.valorEuro=v;}, null, '€') +
+        numField('Cotação do Euro', d.cotEuro, function(v){d.cotEuro=v;}, 'R$');
+    }
+  }
+};
+
+function renderCalc(id) {
+  var cfg = CALC_CONFIGS[id];
+  if (!cfg) return '<p>Aba não encontrada</p>';
+  var d = S[id];
+  var html = secHead(cfg.icon, cfg.title, cfg.sub);
+  html += actionBar(id);
+  html += '<div class="grid-2">';
+  html += card('<div id="fields-'+id+'">' + cfg.fields(d) + '</div>');
+  html += card('<div id="results-'+id+'">' + calcResults(id) + '</div>');
+  html += '</div>';
+  return html;
+}
+
+// ─── Minhas Milhas ───
+function renderMinhas() {
+  var m = S.minhas;
+  var totalA = 0, totalC = 0;
+  PROGS.forEach(function(p){ totalA += (m[p.k]&&m[p.k].a)||0; totalC += ((m[p.k]&&m[p.k].a)||0)*((m[p.k]&&m[p.k].c)||0)/1000; });
+  var cG = totalA > 0 ? (totalC/totalA)*1000 : 0;
+
+  var html = secHead('🏦', 'Minhas Milhas', 'Gerencie o saldo de todos os programas', C.gold);
+  html += actionBar('minhas');
+  html += '<div class="grid-3" style="margin-bottom:18px" id="results-minhas">' +
+    bigStat('Total Acumulado', fmt(totalA), '✈️', C.steel, 'milhas / pontos') +
+    bigStat('Custo Médio / Mil', fmtR(cG), '💸', C.gold, 'por milheiro') +
+    bigStat('Investimento Est.', fmtR(totalC,0), '💰', C.main1, 'total investido') +
+    '</div>';
+
+  html += '<div class="grid-3">';
+  PROGS.forEach(function(p) {
+    var a = (m[p.k]&&m[p.k].a)||0, c2 = (m[p.k]&&m[p.k].c)||0;
+    html += '<div class="card" style="border-left:3px solid '+p.col+'">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">' +
+        '<span style="font-size:18px">'+p.ico+'</span>' +
+        '<span style="font-size:13px;font-weight:700;color:'+p.col+'">'+p.n+'</span>' +
+      '</div>' +
+      numField('Saldo acumulado', a, (function(k){ return function(v){ S.minhas[k].a=v; renderResults('minhas'); }; })(p.k)) +
+      numField('Custo médio R$/mil', c2, (function(k){ return function(v){ S.minhas[k].c=v; renderResults('minhas'); }; })(p.k), 'R$') +
+      '<div style="padding-top:10px;border-top:1px solid var(--border)">' +
+        '<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Investimento est.</div>' +
+        '<div id="inv-'+p.k+'" style="font-size:17px;font-weight:800;color:'+p.col+';margin-top:2px">'+fmtR((a*c2)/1000,0)+'</div>' +
+      '</div>' +
+      '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+// Override renderResults for minhas tab
+function renderResults(tab) {
+  if (tab === 'minhas') {
+    var m = S.minhas;
+    var totalA = 0, totalC = 0;
+    PROGS.forEach(function(p){ totalA += (m[p.k]&&m[p.k].a)||0; totalC += ((m[p.k]&&m[p.k].a)||0)*((m[p.k]&&m[p.k].c)||0)/1000; });
+    var cG = totalA > 0 ? (totalC/totalA)*1000 : 0;
+    var el = document.getElementById('results-minhas');
+    if (el) {
+      el.innerHTML = bigStat('Total Acumulado', fmt(totalA), '✈️', C.steel, 'milhas / pontos') +
+        bigStat('Custo Médio / Mil', fmtR(cG), '💸', C.gold, 'por milheiro') +
+        bigStat('Investimento Est.', fmtR(totalC,0), '💰', C.main1, 'total investido');
+    }
+    PROGS.forEach(function(p) {
+      var inv = document.getElementById('inv-'+p.k);
+      if (inv) {
+        var a = S.minhas[p.k].a||0, c2 = S.minhas[p.k].c||0;
+        inv.textContent = fmtR((a*c2)/1000, 0);
+      }
+    });
+    updateTotals();
+    return;
+  }
+  // default: re-render results section
+  var el2 = document.getElementById('results-'+tab);
+  if (!el2) return;
+  el2.innerHTML = calcResults(tab);
+  updateTotals();
+}
+
+// ─── Acúmulo tabs ───
+function acumMonthTable(key, secKey, title, isAereo) {
+  var data = S[key][secKey];
+  var html = '<div class="card" style="margin-bottom:14px">';
+  html += '<div style="font-size:11px;font-weight:700;color:'+C.aux+';text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">'+title+'</div>';
+  html += '<div style="overflow-x:auto"><table class="tbl">';
+  html += '<thead><tr><th>Mês</th><th class="r">Custo (R$)</th><th class="r">' + (isAereo?'Milhas':'Pontos') + '</th></tr></thead><tbody>';
+
+  MESES.forEach(function(m, i) {
+    var row = data[m] || {c:0, a:0};
+    html += '<tr><td class="lbl">'+MESES_L[i]+'</td>';
+    html += '<td>' + cellInput(row.c, (function(mk, dk, sk){ return function(v){ S[dk][sk][mk].c=v; updateAcumResults(dk); }; })(m, key, secKey)) + '</td>';
+    html += '<td>' + cellInput(row.a, (function(mk, dk, sk){ return function(v){ S[dk][sk][mk].a=v; updateAcumResults(dk); }; })(m, key, secKey)) + '</td>';
+    html += '</tr>';
+  });
+
+  var tC = MESES.reduce(function(s,m){ return s+(data[m]&&data[m].c||0); }, 0);
+  var tA = MESES.reduce(function(s,m){ return s+(data[m]&&data[m].a||0); }, 0);
+  var med = tA > 0 ? (tC/tA)*1000 : 0;
+
+  html += '</tbody><tfoot><tr>';
+  html += '<td>TOTAL</td>';
+  html += '<td style="text-align:right;color:'+C.main1+'">'+fmtR(tC)+'</td>';
+  html += '<td style="text-align:right;color:'+C.steel+'">'+fmt(tA)+' &nbsp;<span style="color:'+C.gold+'">'+fmtR(med)+'/mil</span></td>';
+  html += '</tr></tfoot></table></div></div>';
+  return html;
+}
+
+function updateAcumResults(key) {
+  var el = document.getElementById('acum-results-'+key);
+  if (!el) return;
+  el.innerHTML = calcAcumResults(key);
+  updateTotals();
+}
+
+function calcAcumResults(key) {
+  var d = S[key];
+  var isAereo = (key.indexOf('acum') === 0 && ['acumSmiles','acumAzul','acumLatam','acumIberia','acumTap'].indexOf(key) >= 0);
+  var secs = isAereo ? ['clube','bonif','compra'] : ['clubes','bonificadas','compra'];
+  var totalA = 0, totalC = 0;
+  secs.forEach(function(sec) {
+    MESES.forEach(function(m) {
+      totalA += (d[sec]&&d[sec][m]&&d[sec][m].a)||0;
+      totalC += (d[sec]&&d[sec][m]&&d[sec][m].c)||0;
+    });
+  });
+  var cMed = totalA > 0 ? (totalC/totalA)*1000 : 0;
+  var uso = d.uso || 0;
+  var saldo = totalA - uso;
+
+  var html = '<div class="grid-3" style="margin-bottom:0">' +
+    bigStat('Acúmulo Total', fmt(totalA), '📊', C.steel) +
+    bigStat('Custo Médio/Mil', fmtR(cMed), '💸', C.gold) +
+    bigStat('Saldo após uso', fmt(saldo), '✈️', saldo>=0?C.green:C.red) +
+    '</div>';
+  return html;
+}
+
+function renderAcum(key) {
+  var isAereo = ['acumSmiles','acumAzul','acumLatam','acumIberia','acumTap'].indexOf(key) >= 0;
+  var icoMap = {acumLivelo:'🟣',acumEsfera:'💠',acumOutros:'🏦',acumSmiles:'🟠',acumAzul:'🔵',acumLatam:'🔴',acumIberia:'⭐',acumTap:'✈️'};
+  var nameMap = {acumLivelo:'Acúmulo LIVELO',acumEsfera:'Acúmulo ESFERA',acumOutros:'Acúmulo OUTROS Bancários',acumSmiles:'Acúmulo SMILES',acumAzul:'Acúmulo AZUL FIDELIDADE',acumLatam:'Acúmulo LATAM PASS',acumIberia:'Acúmulo IBERIA PLUS',acumTap:'Acúmulo TAP MILES&GO'};
+
+  var html = secHead(icoMap[key]||'📊', nameMap[key]||key, 'Lançamentos mensais', C.steel);
+  html += actionBar(key);
+
+  if (isAereo) {
+    html += acumMonthTable(key, 'clube', 'Clube de Milhas', true);
+    html += acumMonthTable(key, 'bonif', 'Compras Bonificadas', true);
+    html += acumMonthTable(key, 'compra', 'Compra de Milhas', true);
+    html += '<div class="card">' + numField('Uso de milhas no ano', S[key].uso||0, function(v){ S[key].uso=v; updateAcumResults(key); }) + '</div>';
+  } else {
+    html += acumMonthTable(key, 'clubes', 'Clubes de Pontos', false);
+    html += acumMonthTable(key, 'bonificadas', 'Compras Bonificadas', false);
+    html += acumMonthTable(key, 'compra', 'Compra de Pontos', false);
+  }
+
+  html += '<div id="acum-results-'+key+'" class="grid-3" style="margin-top:14px">' + calcAcumResults(key) + '</div>';
+  return html;
+}
+
+// ─── Init — DOMContentLoaded + onload fallback for Safari iOS ───
+function _init() {
+  if (_init._done) return;
+  _init._done = true;
+  renderSidebar();
+  navigate('dashboard');
+  updateTotals();
+
+  // Handle resize — desktop sidebar doesn't need overlay
+  window.addEventListener('resize', function() {
+    if (window.innerWidth > 900) {
+      document.getElementById('overlay').classList.remove('on');
+      if (sideOpen) document.getElementById('main').classList.add('shifted');
+    } else {
+      document.getElementById('main').classList.remove('shifted');
+      if (sideOpen) document.getElementById('overlay').classList.add('on');
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded', _init);
+window.addEventListener('load', _init);
+// Fallback: run after short delay if neither fired
+setTimeout(_init, 100);
+</script>
+</body>
+</html>
