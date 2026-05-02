@@ -194,6 +194,24 @@ input[type=number]{-moz-appearance:textfield;}
 /* ── Footer ── */
 #footer{background:linear-gradient(135deg,var(--main1),var(--aux));
   padding:14px 16px;text-align:center;}
+
+/* === Saldos Programas de Fidelidade === */
+.loyalty-section{margin-top:24px;}
+.loyalty-section-title{font-size:11px;font-weight:700;color:var(--steel);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;}
+.loyalty-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;}
+.loyalty-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;}
+.loyalty-card-header{display:flex;align-items:center;gap:8px;}
+.loyalty-card-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.loyalty-card-name{font-size:12px;font-weight:700;color:var(--text);}
+.loyalty-card-balance{font-size:22px;font-weight:700;color:var(--text);}
+.loyalty-card-label{font-size:10px;color:var(--muted);font-weight:500;}
+.loyalty-card-input{display:flex;flex-direction:column;gap:4px;margin-top:2px;}
+.loyalty-card-input label{font-size:10px;color:var(--muted);font-weight:600;margin-top:4px;}
+.loyalty-card-input input{background:var(--bgsec);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;color:var(--text);width:100%;font-family:inherit;box-sizing:border-box;}
+.loyalty-card-input input:focus{outline:none;border-color:var(--steel);}
+.loyalty-card-actions{margin-top:6px;}
+.loyalty-btn-login{display:block;background:var(--aux);color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;text-align:center;transition:opacity .2s;}
+.loyalty-btn-login:hover{opacity:.82;color:#fff;}
 </style>
 </head>
 <body>
@@ -351,7 +369,14 @@ var INIT = {
   acumAzul:   makeZeroAcumAereo(),
   acumLatam:  makeZeroAcumAereo(),
   acumIberia: makeZeroAcumAereo(),
-  acumTap:    makeZeroAcumAereo()
+  acumTap:    makeZeroAcumAereo(),
+  saldosProgramas: {
+    smiles:    {saldo:0, login:'', senha:''},
+    livelo:    {saldo:0, login:'', senha:''},
+    esfera:    {saldo:0, login:'', senha:''},
+    latampass: {saldo:0, login:'', senha:''},
+    azul:      {saldo:0, login:'', senha:''}
+  }
 };
 
 var ZEROS = {
@@ -886,6 +911,39 @@ function renderDashboard() {
       '<div class="prog-bar-wrap"><div class="prog-bar" style="width:'+w+'%;background:linear-gradient(90deg,'+C.steel+','+p.col+')"></div></div>' +
       '</div>';
   });
+
+  // === Saldos dos Programas de Fidelidade ===
+  if (!S.saldosProgramas) S.saldosProgramas = {};
+  var LP_PROGS = [
+    {k:'smiles',    n:'Smiles',     col:'#FF6B00', url:'https://www.smiles.com.br/minha-conta'},
+    {k:'livelo',    n:'Livelo',     col:'#9B26AF', url:'https://www.livelo.com.br/pt/minha-conta'},
+    {k:'esfera',    n:'Esfera',     col:'#E4003A', url:'https://www.esfera.com.vc/minha-conta'},
+    {k:'latampass', n:'Latam Pass', col:'#1B0088', url:'https://www.latampass.latam.com/pt_br'},
+    {k:'azul',      n:'Azul Fid.',  col:'#0057B8', url:'https://www.voeazul.com.br/fidelidade'}
+  ];
+  LP_PROGS.forEach(function(lp){if(!S.saldosProgramas[lp.k])S.saldosProgramas[lp.k]={saldo:0,login:'',senha:''};});
+  html += '<div class="loyalty-section">';
+  html += '<div class="loyalty-section-title">&#128196; Saldos dos Programas de Fidelidade</div>';
+  html += '<div class="loyalty-grid">';
+  LP_PROGS.forEach(function(lp) {
+    var lsp = S.saldosProgramas[lp.k]||{saldo:0,login:'',senha:''};
+    var lLogin = (lsp.login||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+    html += '<div class="loyalty-card">';
+    html += '<div class="loyalty-card-header"><div class="loyalty-card-dot" style="background:'+lp.col+'"></div><span class="loyalty-card-name">'+lp.n+'</span></div>';
+    html += '<div class="loyalty-card-balance">'+fmt(lsp.saldo||0)+'</div>';
+    html += '<div class="loyalty-card-label">pontos / milhas</div>';
+    html += '<div class="loyalty-card-input">';
+    html += '<label>Login (e-mail / CPF)</label>';
+    html += '<input type="text" placeholder="e-mail ou CPF" value="'+lLogin+'" onchange="(S.saldosProgramas=S.saldosProgramas||{})[this.dataset.k]=((S.saldosProgramas||{})[this.dataset.k]||{saldo:0,login:\'\',senha:\'\'}),S.saldosProgramas[this.dataset.k].login=this.value,lsSave(S)" data-k="'+lp.k+'" />';
+    html += '<label>Senha</label>';
+    html += '<input type="password" placeholder="senha" onchange="(S.saldosProgramas=S.saldosProgramas||{})[this.dataset.k]=((S.saldosProgramas||{})[this.dataset.k]||{saldo:0,login:\'\',senha:\'\'}),S.saldosProgramas[this.dataset.k].senha=this.value,lsSave(S)" data-k="'+lp.k+'" />';
+    html += '<label>Saldo (pontos / milhas)</label>';
+    html += '<input type="number" min="0" placeholder="0" value="'+(lsp.saldo||0)+'" onchange="(S.saldosProgramas=S.saldosProgramas||{})[this.dataset.k]=((S.saldosProgramas||{})[this.dataset.k]||{saldo:0,login:\'\',senha:\'\'}),S.saldosProgramas[this.dataset.k].saldo=parseFloat(this.value)||0,lsSave(S),render()" data-k="'+lp.k+'" />';
+    html += '</div>';
+    html += '<a class="loyalty-btn-login" href="'+lp.url+'" target="_blank" rel="noopener">&#128279; Acessar '+lp.n+'</a>';
+    html += '</div>';
+  });
+  html += '</div></div>';
   html += '</div>';
   return html;
 }
