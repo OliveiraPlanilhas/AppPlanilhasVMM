@@ -60,7 +60,7 @@ input[type=number]{-moz-appearance:textfield;}
   display:flex;align-items:center;justify-content:center;}
 .topbar-brand{line-height:1.1;}
 .topbar-brand b{font-size:15px;font-weight:800;letter-spacing:-.01em;}
-.topbar-brand span{font-size:9px;color:rgba(218,196,132,0.6);letter-spacing:.1em;text-transform:uppercase;display:block;}
+.topbar-brand span{font-size:9px;color:rgba(218,196,132,0.6);letter-spacing:.1em;text-transform:uppercase;display:block;}.topbar-brand b span{display:inline!important;font-size:15px!important;}
 .topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center;}
 .milhas-badge{padding:5px 10px;border-radius:20px;background:rgba(124,154,192,0.2);
   border:1px solid rgba(124,154,192,0.4);font-size:11px;font-weight:600;
@@ -221,9 +221,7 @@ input[type=number]{-moz-appearance:textfield;}
 <div id="topbar">
   <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
   <div class="topbar-logo">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path d="M21 16v-2l-8-5V3.5C13 2.67 12.33 2 11.5 2S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="white"/>
-    </svg>
+    <img src="favicon.png" style="display:block;width:100%;height:100%;object-fit:contain;">
   </div>
   <div class="topbar-brand">
     <b><span style="color:#dac484">VMM</span> <span style="color:#fff">Turbo</span><span style="color:#7c9ac0">12</span></b>
@@ -1235,7 +1233,7 @@ function renderAcum(key) {
   var icoMap = {acumLivelo:'🟣',acumEsfera:'💠',acumOutros:'🏦',acumSmiles:'🟠',acumAzul:'🔵',acumLatam:'🔴',acumIberia:'⭐',acumTap:'✈️'};
   var nameMap = {acumLivelo:'Acúmulo LIVELO',acumEsfera:'Acúmulo ESFERA',acumOutros:'Acúmulo OUTROS Bancários',acumSmiles:'Acúmulo SMILES',acumAzul:'Acúmulo AZUL FIDELIDADE',acumLatam:'Acúmulo LATAM PASS',acumIberia:'Acúmulo IBERIA PLUS',acumTap:'Acúmulo TAP MILES&GO'};
 
-  var html = secHead(icoMap[key]||'📊', nameMap[key]||key, 'Lançamentos mensais', C.steel);
+  topbar-brand b spanvar html = secHead(icoMap[key]||'📊', nameMap[key]||key, 'Lançamentos mensais', C.steel);
   html += actionBar(key);
 
   if (isAereo) {
